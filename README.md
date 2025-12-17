@@ -203,18 +203,4 @@ Example violation record:
 - Disable `ENABLE_PREPROCESSING` for faster processing
 - Use GPU if available
 
-## 📝 License
 
-[Add your license here]
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📧 Contact
-
-[Add your contact information here]
-
----
-
-**Note**: This system is designed for food safety compliance monitoring. Ensure proper calibration and testing before deployment in production environments.
