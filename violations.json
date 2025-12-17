@@ -1,0 +1,62 @@
+[
+  {
+    "frame_number": 210,
+    "timestamp": "2025-12-17T23:23:29.660281",
+    "frame_path": "violation_frames\\violation_frame_210.jpg",
+    "violation_info": [
+      {
+        "hand_id": 0,
+        "hand_box": [
+          420,
+          344,
+          457,
+          377
+        ],
+        "roi_name": "ingredient_containers",
+        "frames_in_roi": 8,
+        "frames_at_pizza": 0,
+        "violation_type": "Grabbed from ingredient_containers without scooper and placed on pizza"
+      }
+    ]
+  },
+  {
+    "frame_number": 260,
+    "timestamp": "2025-12-17T23:23:47.170973",
+    "frame_path": "violation_frames\\violation_frame_260.jpg",
+    "violation_info": [
+      {
+        "hand_id": 7,
+        "hand_box": [
+          392,
+          327,
+          431,
+          361
+        ],
+        "roi_name": "ingredient_containers",
+        "frames_in_roi": 8,
+        "frames_at_pizza": 0,
+        "violation_type": "Grabbed from ingredient_containers without scooper and placed on pizza"
+      }
+    ]
+  },
+  {
+    "frame_number": 311,
+    "timestamp": "2025-12-17T23:24:03.763473",
+    "frame_path": "violation_frames\\violation_frame_311.jpg",
+    "violation_info": [
+      {
+        "hand_id": 9,
+        "hand_box": [
+          425,
+          348,
+          466,
+          388
+        ],
+        "roi_name": "ingredient_containers",
+        "frames_in_roi": 8,
+        "frames_at_pizza": 0,
+        "violation_type": "Grabbed from ingredient_containers without scooper and placed on pizza"
+      }
+    ]
+  }
+]

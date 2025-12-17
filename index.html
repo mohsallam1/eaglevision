@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eagle Vision - Hygiene Compliance Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator.connected {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-indicator.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-indicator.connecting {
+            background: #ffc107;
+            color: #333;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-value.violations {
+            color: #dc3545;
+        }
+
+        /* Video Container */
+        .video-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #videoCanvas {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+        }
+
+        .video-placeholder {
+            text-align: center;
+            padding: 100px 20px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+
+        /* Violation Alert Overlay */
+        .violation-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: none;
+            animation: violationPulse 0.5s ease-in-out;
+        }
+
+        .violation-alert.show {
+            display: block;
+        }
+
+        @keyframes violationPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* Control Buttons */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Violation Log */
+        .violation-log {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .violation-log h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .violation-item {
+            background: #fff5f5;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .violation-item:hover {
+            background: #ffe5e5;
+            transform: translateX(5px);
+        }
+
+        .violation-item-content {
+            flex: 1;
+        }
+
+        .violation-frame {
+            font-weight: bold;
+            color: #dc3545;
+            font-size: 1.1em;
+        }
+
+        .violation-time {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .violation-badge {
+            background: #dc3545;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .empty-log {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px;
+            font-size: 1.1em;
+        }
+
+        /* Scrollbar styling */
+        .violation-log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .violation-log::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .violation-log::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .violation-log::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .stat-value {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="statusIndicator" class="status-indicator connecting">
+        <span class="status-dot"></span>
+        <span id="statusText">Connecting...</span>
+    </div>
+
+    <div class="violation-alert" id="violationAlert">
+        🚨 VIOLATION DETECTED! 🚨
+    </div>
+
+    <header>
+        <h1>🦅 Eagle Vision</h1>
+        <p class="subtitle">Hygiene Compliance Monitoring System</p>
+    </header>
+
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Frames Processed</div>
+                <div class="stat-value" id="framesProcessed">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Violations Detected</div>
+                <div class="stat-value violations" id="violationsDetected">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">FPS</div>
+                <div class="stat-value" id="fps">0</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="connectBtn" onclick="connectWebSocket()">Connect</button>
+            <button class="btn btn-danger" id="disconnectBtn" onclick="disconnectWebSocket()" disabled>Disconnect</button>
+        </div>
+
+        <!-- Video Display -->
+        <div class="video-container">
+            <canvas id="videoCanvas"></canvas>
+            <div class="video-placeholder" id="videoPlaceholder">
+                Waiting for video stream...
+            </div>
+        </div>
+
+        <!-- Violation Log -->
+        <div class="violation-log">
+            <h2>Recent Violations</h2>
+            <div id="violationList">
+                <div class="empty-log">No violations detected yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let frameCount = 0;
+        let lastFrameTime = Date.now();
+        let fps = 0;
+        let violationLog = [];
+        const maxLogEntries = 10;
+
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const violationAlert = document.getElementById('violationAlert');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+
+        function updateStatus(status, text) {
+            statusIndicator.className = `status-indicator ${status}`;
+            statusText.textContent = text;
+        }
+
+        function updateStats(frameNumber, violationCount) {
+            document.getElementById('framesProcessed').textContent = frameNumber;
+            document.getElementById('violationsDetected').textContent = violationCount;
+
+            // Calculate FPS
+            frameCount++;
+            const now = Date.now();
+            const elapsed = (now - lastFrameTime) / 1000;
+            if (elapsed >= 1) {
+                fps = Math.round(frameCount / elapsed);
+                document.getElementById('fps').textContent = fps;
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+        }
+
+        function showViolationAlert() {
+            violationAlert.classList.add('show');
+            setTimeout(() => {
+                violationAlert.classList.remove('show');
+            }, 2000);
+        }
+
+        function addViolationToLog(frameNumber) {
+            const timestamp = new Date().toLocaleTimeString();
+            
+            violationLog.unshift({
+                frame: frameNumber,
+                time: timestamp
+            });
+
+            // Keep only last 10 violations
+            if (violationLog.length > maxLogEntries) {
+                violationLog.pop();
+            }
+
+            updateViolationLogDisplay();
+        }
+
+        function updateViolationLogDisplay() {
+            const violationList = document.getElementById('violationList');
+            
+            if (violationLog.length === 0) {
+                violationList.innerHTML = '<div class="empty-log">No violations detected yet</div>';
+                return;
+            }
+
+            violationList.innerHTML = violationLog.map(v => `
+                <div class="violation-item">
+                    <div class="violation-item-content">
+                        <div class="violation-frame">Frame ${v.frame}</div>
+                        <div class="violation-time">${v.time}</div>
+                    </div>
+                    <div class="violation-badge">VIOLATION</div>
+                </div>
+            `).join('');
+        }
+
+        function displayFrame(base64Image) {
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                videoPlaceholder.style.display = 'none';
+                canvas.style.display = 'block';
+            };
+            img.src = 'data:image/jpeg;base64,' + base64Image;
+        }
+
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                console.log('WebSocket already connected');
+                return;
+            }
+
+            updateStatus('connecting', 'Connecting...');
+            connectBtn.disabled = true;
+
+            // Use the streaming service endpoint
+            const wsUrl = 'ws://localhost:8080/ws/video';
+            
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    console.log('✓ WebSocket connected');
+                    updateStatus('connected', 'Connected');
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'heartbeat') {
+                            // Just a keep-alive, update violation count if available
+                            if (data.violation_count !== undefined) {
+                                document.getElementById('violationsDetected').textContent = data.violation_count;
+                            }
+                            return;
+                        }
+
+                        if (data.type === 'connected') {
+                            console.log('Connection acknowledged:', data.message);
+                            return;
+                        }
+
+                        if (data.type === 'video_ended') {
+                            console.log('Video processing complete');
+                            updateStatus('connected', 'Video Complete');
+                            document.getElementById('violationsDetected').textContent = data.violation_count;
+                            // Show completion message
+                            const placeholder = document.getElementById('videoPlaceholder');
+                            if (placeholder) {
+                                placeholder.innerHTML = `
+                                    <h2 style="color: #28a745;">✓ Video Processing Complete!</h2>
+                                    <p style="font-size: 1.2em; margin-top: 20px;">
+                                        Total Violations Detected: <strong>${data.violation_count}</strong>
+                                    </p>
+                                    <p style="margin-top: 10px;">
+                                        Check violations.json for detailed records
+                                    </p>
+                                `;
+                                placeholder.style.display = 'block';
+                            }
+                            return;
+                        }
+
+                        if (data.type === 'frame') {
+                            // Display frame
+                            if (data.frame) {
+                                displayFrame(data.frame);
+                            }
+
+                            // Update stats
+                            updateStats(data.frame_number, data.violation_count);
+
+                            // Handle violation detection
+                            if (data.violation_detected) {
+                                showViolationAlert();
+                                addViolationToLog(data.frame_number);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error('✗ WebSocket error:', error);
+                    updateStatus('disconnected', 'Error');
+                };
+
+                ws.onclose = () => {
+                    console.log('✗ WebSocket disconnected');
+                    updateStatus('disconnected', 'Disconnected');
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    
+                    // Auto-reconnect after 3 seconds
+                    setTimeout(() => {
+                        if (!connectBtn.disabled) {
+                            console.log('Attempting to reconnect...');
+                            connectWebSocket();
+                        }
+                    }, 3000);
+                };
+            } catch (e) {
+                console.error('Failed to create WebSocket:', e);
+                updateStatus('disconnected', 'Failed');
+                connectBtn.disabled = false;
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        // Auto-connect on page load (with 1 second delay)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                connectWebSocket();
+            }, 1000);
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            disconnectWebSocket();
+        });
+    </script>
+</body>
+</html>
